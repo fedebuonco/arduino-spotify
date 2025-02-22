@@ -919,6 +919,37 @@ int SpotifyArduino::getDevices(processDevices devicesCallback)
     return statusCode;
 }
 
+bool SpotifyArduino::addToMyMusic(const char * uri)
+{
+
+#ifdef SPOTIFY_DEBUG
+    char command[125];
+    sprintf(command, SPOTIFY_ADD_TO_MY_MUSIC_ENDPOINT, uri);
+    Serial.println(command);
+    printStack();
+#endif
+
+
+    if (autoTokenRefresh)
+    {
+        checkAndRefreshAccessToken();
+    }
+
+    int statusCode = makeGetRequest(command, _bearerToken);
+#ifdef SPOTIFY_DEBUG
+    Serial.print("Status Code: ");
+    Serial.println(statusCode);
+#endif
+    if (statusCode > 0)
+    {
+        skipHeaders();
+    }
+
+    closeClient();
+    return statusCode;
+}
+
+
 int SpotifyArduino::searchForSong(String query, int limit, processSearch searchCallback, SearchResult results[])
 {
 

@@ -65,6 +65,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #define SPOTIFY_PLAYER_ENDPOINT "/v1/me/player"
 #define SPOTIFY_DEVICES_ENDPOINT "/v1/me/player/devices"
+#define SPOTIFY_ADD_TO_MY_MUSIC_ENDPOINT "/v1/me/tracks?ids=%s"
+
 
 #define SPOTIFY_PLAY_ENDPOINT "/v1/me/player/play"
 #define SPOTIFY_SEARCH_ENDPOINT "/v1/search"
@@ -203,6 +205,7 @@ public:
   bool playerNavigate(char *command, const char *deviceId = "");
   bool seek(int position, const char *deviceId = "");
   bool transferPlayback(const char *deviceId, bool play = false);
+  bool addToMyMusic(const char * uri);
 
   //Search
   int searchForSong(String query, int limit, processSearch searchCallback, SearchResult results[]);
@@ -226,9 +229,9 @@ public:
 
 private:
   char _bearerToken[SPOTIFY_ACCESS_TOKEN_LENGTH + 10]; //10 extra is for "bearer " at the start
-  char *_refreshToken;
-  const char *_clientId;
-  const char *_clientSecret;
+  char *_refreshToken{};
+  const char *_clientId{};
+  const char *_clientSecret{};
   unsigned int timeTokenRefreshed;
   unsigned int tokenTimeToLiveMs;
   int commonGetImage(char *imageUrl);
