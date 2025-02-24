@@ -65,7 +65,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 #define SPOTIFY_PLAYER_ENDPOINT "/v1/me/player"
 #define SPOTIFY_DEVICES_ENDPOINT "/v1/me/player/devices"
-#define SPOTIFY_ADD_TO_MY_MUSIC_ENDPOINT "/v1/me/tracks?ids=%s"
+#define SPOTIFY_ADD_TO_MY_MUSIC_ENDPOINT "/v1/me/tracks"
 
 
 #define SPOTIFY_PLAY_ENDPOINT "/v1/me/player/play"

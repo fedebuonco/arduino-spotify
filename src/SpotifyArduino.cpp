@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
 #include "SpotifyArduino.h"
+#include <cstring>
 
 SpotifyArduino::SpotifyArduino(Client &client)
 {
@@ -42,19 +43,37 @@ SpotifyArduino::SpotifyArduino(Client &client, const char *clientId, const char 
 int SpotifyArduino::makeRequestWithBody(const char *type, const char *command, const char *authorization, const char *body, const char *contentType, const char *host)
 {
     client->flush();
+
 #ifdef SPOTIFY_DEBUG
+    Serial.println("Making HTTP Request:");
+    Serial.print("Host: ");
     Serial.println(host);
+    Serial.print("Port: ");
+    Serial.println(portNumber);
+    Serial.print("Request Type: ");
+    Serial.println(type);
+    Serial.print("Command: ");
+    Serial.println(command);
+    Serial.print("Content-Type: ");
+    Serial.println(contentType);
+    Serial.print("Authorization: ");
+    Serial.println(authorization ? authorization : "NULL");
+    Serial.print("Body Length: ");
+    Serial.println(strlen(body));
+    Serial.print("Body: ");
+    Serial.println(body);
 #endif
+
     client->setTimeout(SPOTIFY_TIMEOUT);
     if (!client->connect(host, portNumber))
     {
-#ifdef SPOTIFY_SERIAL_OUTPUT
+#ifdef SPOTIFY_DEBUG
         Serial.println(F("Connection failed"));
 #endif
         return -1;
     }
 
-    // give the esp a breather
+    // Give the ESP a breather
     yield();
 
     // Send HTTP request
@@ -62,10 +81,9 @@ int SpotifyArduino::makeRequestWithBody(const char *type, const char *command, c
     client->print(command);
     client->println(F(" HTTP/1.0"));
 
-    //Headers
+    // Headers
     client->print(F("Host: "));
     client->println(host);
-
     client->println(F("Accept: application/json"));
     client->print(F("Content-Type: "));
     client->println(contentType);
@@ -80,20 +98,24 @@ int SpotifyArduino::makeRequestWithBody(const char *type, const char *command, c
 
     client->print(F("Content-Length: "));
     client->println(strlen(body));
-
     client->println();
-
     client->print(body);
 
     if (client->println() == 0)
     {
-#ifdef SPOTIFY_SERIAL_OUTPUT
+#ifdef SPOTIFY_DEBUG
         Serial.println(F("Failed to send request"));
 #endif
         return -2;
     }
 
     int statusCode = getHttpStatusCode();
+
+#ifdef SPOTIFY_DEBUG
+    Serial.print("HTTP Status Code: ");
+    Serial.println(statusCode);
+#endif
+
     return statusCode;
 }
 
@@ -921,25 +943,40 @@ int SpotifyArduino::getDevices(processDevices devicesCallback)
 
 bool SpotifyArduino::addToMyMusic(const char * uri)
 {
-
 #ifdef SPOTIFY_DEBUG
     char command[125];
-    sprintf(command, SPOTIFY_ADD_TO_MY_MUSIC_ENDPOINT, uri);
+    sprintf(command, SPOTIFY_ADD_TO_MY_MUSIC_ENDPOINT);
+    Serial.println("Spotify Add to My Music Request:");
+    Serial.print("Command: ");
     Serial.println(command);
+    Serial.print("URI: ");
+    Serial.println(uri);
     printStack();
 #endif
 
+    StaticJsonDocument<64> body_json;  // Increase size for array support
+    JsonArray ids = body_json.createNestedArray("ids"); // Create array inside "ids"
+    ids.add(uri); // Add the URI to the array
+
+    char jsonBuffer[128]; // Ensure buffer is large enough
+    serializeJson(body_json, jsonBuffer); // Convert JSON object to char*
+
+#ifdef SPOTIFY_DEBUG
+    Serial.print("Serialized JSON: ");
+    Serial.println(jsonBuffer);
+#endif
 
     if (autoTokenRefresh)
     {
         checkAndRefreshAccessToken();
     }
+    int statusCode = makePutRequest(command, _bearerToken, jsonBuffer);
 
-    int statusCode = makePutRequest(command, _bearerToken);
 #ifdef SPOTIFY_DEBUG
     Serial.print("Status Code: ");
     Serial.println(statusCode);
 #endif
+
     if (statusCode > 0)
     {
         skipHeaders();
@@ -948,7 +985,6 @@ bool SpotifyArduino::addToMyMusic(const char * uri)
     closeClient();
     return statusCode;
 }
-
 
 int SpotifyArduino::searchForSong(String query, int limit, processSearch searchCallback, SearchResult results[])
 {
