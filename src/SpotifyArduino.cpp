@@ -935,7 +935,7 @@ bool SpotifyArduino::addToMyMusic(const char * uri)
         checkAndRefreshAccessToken();
     }
 
-    int statusCode = makeGetRequest(command, _bearerToken);
+    int statusCode = makePutRequest(command, _bearerToken);
 #ifdef SPOTIFY_DEBUG
     Serial.print("Status Code: ");
     Serial.println(statusCode);
